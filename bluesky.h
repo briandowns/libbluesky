@@ -63,9 +63,6 @@ bs_client_response_t*
 bs_resolve_did(const char *handle);
 
 bs_client_response_t*
-bs_retrieve_api_key(const char *app_password);
-
-bs_client_response_t*
 bs_profile_get(const char *handle);
 
 /**

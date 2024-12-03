@@ -63,4 +63,4 @@ clean:
 
 .PHONY: example
 example: clean
-	$(CC) -o $@ bluesky.c example.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -g -o $@ bluesky.c example.c $(CFLAGS) $(LDFLAGS)

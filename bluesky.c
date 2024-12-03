@@ -34,20 +34,24 @@
 
 #include "bluesky.h"
 
+#define BS_RES_JSON_HEADER "Content-Type: application/json"
 #define BS_REQ_JSON_HEADER "Accept: application/json"
-#define TOKEN_HEADER_SIZE 256
-#define DID_MAX_SIZE 2048
-#define DEFAULT_URL_SIZE 2048
 
-#define POST_FEED_URL 'https://bsky.social/xrpc/com.atproto.repo.createRecord'
+#define TOKEN_HEADER_SIZE 1024
+#define DID_MAX_SIZE      2048
+#define DEFAULT_URL_SIZE  2048
 
+#define API_BASE "https://bsky.social/xrpc"
+#define AUTH_URL API_BASE "/com.atproto.server.createSession"
+#define POST_FEED_URL API_BASE "/com.atproto.repo.createRecord"
+#define GET_PROFILE_URL API_BASE "/app.bsky.actor.getProfile"
 
 #define SET_BASIC_CURL_CONFIG \
     curl_easy_setopt(curl, CURLOPT_URL, url); \
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); \
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk); \
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb); \
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)response); 
 
 #define CURL_CALL_ERROR_CHECK \
     if (res != CURLE_OK) { \
@@ -63,7 +67,8 @@
     free(url);
 
 static CURL *curl = NULL;
-static char did[DID_MAX_SIZE];
+static char token[400];
+static char refresh_token[400];
 static char token_header[TOKEN_HEADER_SIZE];
 
 /**
@@ -95,27 +100,25 @@ bs_client_response_new()
     return resp;
 }
 
-// API_KEY_URL='https://bsky.social/xrpc/com.atproto.server.createSession'
-// POST_DATA="{ \"identifier\": \"${DID}\", \"password\": \"${APP_PASSWORD}\" }"
-// export API_KEY=$(curl -X POST 
-//     -H 'Content-Type: application/json' 
-//     -d "$POST_DATA" 
-//     "$API_KEY_URL" | jq -r .accessJwt)
 bs_client_response_t*
 bs_client_authenticate(const char *handle, const char *app_password)
 {
     bs_client_response_t *response = bs_client_response_new();
     struct curl_slist *chunk = NULL;
 
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, BS_RES_JSON_HEADER);
     chunk = curl_slist_append(chunk, token_header);
 
     char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
-    strcpy(url, "https://bsky.social/xrpc/com.atproto.server.createSession");
+    strcpy(url, AUTH_URL);
 
-    json_t *json_obj = json_object();
-    json_object_set(json_obj, "identifier", json_string(handle));
-    json_object_set(json_obj, "password", json_string(app_password));
-    char *data = json_dumps(json_obj, 0);
+    json_t *root = json_object();
+    json_t *enc_handle = json_string(handle);
+    json_t *enc_app_password = json_string(app_password);
+    json_object_set(root, "identifier", enc_handle);
+    json_object_set(root, "password", enc_app_password);
+    char *data = json_dumps(root, 0);
 
     SET_BASIC_CURL_CONFIG;
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -123,15 +126,11 @@ bs_client_authenticate(const char *handle, const char *app_password)
 
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
-    if (res != CURLE_OK) {
-        char *err_msg = (char *)curl_easy_strerror(res);
-        response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
-        strcpy(response->err_msg, err_msg);
-        CALL_CLEANUP;
-        return response;
-    }
+    CURL_CALL_ERROR_CHECK;
 
-    json_decref(json_obj);
+    json_decref(enc_handle);
+    json_decref(enc_app_password);
+    json_decref(root);
     free(data);
 
     CALL_CLEANUP;
@@ -152,23 +151,27 @@ bs_client_init(const char *handle, const char *app_password)
     if (res->err_msg != NULL) {
         printf("%s\n", res->err_msg);
         bs_client_response_free(res);
-        return 1;
+        return 2;
     }
-    printf("%s\n", res->resp);
 
     json_t *root;
     json_error_t error;
 
     root = json_loads(res->resp, 0, &error);
 
-    const char *token = {0};
-    const char *refreshToken = {0};
-    json_unpack(root, "{s:s, s:s}", "accessJwt", &token,
-                      "refreshJwt", refreshToken);
-    printf("%s - %s\n", token, refreshToken);
-    json_decref(root);
+    const char *t = {0};
+    const char *rt = {0};
+    json_unpack(root, "{s:s, s:s}", "accessJwt", &t, "refreshJwt", &rt);
+
+    strcpy(token, t);
+    strcpy(refresh_token, rt);
 
     bs_client_response_free(res);
+
+    strcpy(token_header, "Authorization: Bearer ");
+    strcat(token_header, token);
+
+    json_decref(root);
 
     return 0;
 }
@@ -185,22 +188,18 @@ bs_client_response_free(bs_client_response_t *res)
     }
 }
 
-// HANDLE='felicitas.pojtinger.com'
-// DID_URL="https://bsky.social/xrpc/com.atproto.identity.resolveHandle"
-// export DID=$(curl -G 
-//     --data-urlencode "handle=$HANDLE" 
-//     "$DID_URL" | jq -r .did)
-// {"did":"did:plc:d2pmhxz4ud7z3zwc5rejgl53"}
 bs_client_response_t*
 bs_resolve_did(const char *handle)
 {
     bs_client_response_t *response = bs_client_response_new();
     struct curl_slist *chunk = NULL;
 
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
     chunk = curl_slist_append(chunk, token_header);
+
     char *escaped_handle = curl_easy_escape(curl, handle, strlen(handle));
     char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
-    strcpy(url, "https://bsky.social/xrpc/com.atproto.identity.resolveHandle");
+    strcpy(url, GET_PROFILE_URL);
     strcat(url, "?handle=");
     strcat(url, handle);
 
@@ -222,39 +221,24 @@ bs_resolve_did(const char *handle)
     return response;
 }
 
-// static void
-// bs_set_did(const char *handle)
-// {
-//     bs_client_response_t *res = bs_resolve_did(handle);
-
-//     json_error_t error;
-//     json_t *root = json_loads(res->resp, 0, &error);
-
-//     const char *identify = {0};
-//     json_unpack(root, "{s:s}", "did", &did);
-//     json_decref(root);
-
-//     bs_client_response_free(res);
-
-//     strcpy(did, identify);
-
-//     return;
-// }
-
 bs_client_response_t*
 bs_profile_get(const char *handle)
 {
     bs_client_response_t *response = bs_client_response_new();
     struct curl_slist *chunk = NULL;
 
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
     chunk = curl_slist_append(chunk, token_header);
+
     char *escaped_handle = curl_easy_escape(curl, handle, strlen(handle));
+
     char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
-    strcpy(url, "https://bsky.social/xrpc/app.bsky.actor.getProfile");
+    strcpy(url, GET_PROFILE_URL);
     strcat(url, "?actor=");
     strcat(url, handle);
 
     SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
@@ -262,6 +246,7 @@ bs_profile_get(const char *handle)
         char *err_msg = (char *)curl_easy_strerror(res);
         response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
         strcpy(response->err_msg, err_msg);
+        curl_free(escaped_handle);
         CALL_CLEANUP;
         return response;
     }
