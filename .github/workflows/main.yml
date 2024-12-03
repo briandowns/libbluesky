@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+      - ".gitignore"
+      - "LICENSE"
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform:
+          - linux/arm64/v8
+          - linux/amd64
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: master
+    - name: Pull
+      run: git pull origin master
+    - name: Install Dependencies
+      run: |
+        if [ "${RUNNER_OS}" == "Linux" ]; then
+          sudo apt install -y make build-essential libcurl4 libcurl4-openssl-dev libjansson4 libjansson-dev
+        elif [ "${RUNNER_OS}" == "macOS" ]; then
+          brew update
+          brew uninstall curl
+          brew install curl-openssl jansson
+        fi
+    - name: Compile Shared Object
+      run: make
+    - name: Run tests
+      run: make tests

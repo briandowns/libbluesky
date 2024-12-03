@@ -1,0 +1,14 @@
+*.o
+*.so
+*.dynlib
+
+.vscode/*
+
+bin/*
+tests/tests
+example
+libbluesky.dylib
+libbluesky.so
+bsky
+bluesky
+bs
