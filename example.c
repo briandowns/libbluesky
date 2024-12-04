@@ -26,7 +26,11 @@ main(int argc, char **argv)
     // printf("%s\n", did);
     // json_decref(root);
 
-    bs_client_response_t *res = bs_profile_get("bdowns328.bsky.social");
+    // bs_client_response_t *res = bs_profile_get("bdowns328.bsky.social");
+    // printf("%s\n", res->resp);
+    // bs_client_response_free(res);
+
+    bs_client_response_t *res = bs_timeline_get(NULL);
     printf("%s\n", res->resp);
     bs_client_response_free(res);
 

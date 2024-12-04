@@ -41,10 +41,11 @@
 #define DID_MAX_SIZE      2048
 #define DEFAULT_URL_SIZE  2048
 
-#define API_BASE "https://bsky.social/xrpc"
-#define AUTH_URL API_BASE "/com.atproto.server.createSession"
-#define POST_FEED_URL API_BASE "/com.atproto.repo.createRecord"
-#define GET_PROFILE_URL API_BASE "/app.bsky.actor.getProfile"
+#define API_BASE                  "https://bsky.social/xrpc"
+#define AUTH_URL API_BASE         "/com.atproto.server.createSession"
+#define POST_FEED_URL API_BASE    "/com.atproto.repo.createRecord"
+#define GET_PROFILE_URL API_BASE  "/app.bsky.actor.getProfile"
+#define GET_TIMELINE_URL API_BASE "/app.bsky.feed.getTimeline"
 
 #define SET_BASIC_CURL_CONFIG \
     curl_easy_setopt(curl, CURLOPT_URL, url); \
@@ -70,6 +71,19 @@ static CURL *curl = NULL;
 static char token[400];
 static char refresh_token[400];
 static char token_header[TOKEN_HEADER_SIZE];
+
+/**
+ *
+ */
+static int
+bs_client_pagination_opts_validate(const bs_client_pagination_opts *opts)
+{
+    if (opts->limit > 100) {
+        return BS_CLIENT_PAGINATION_ERR_OVER_LIMIT;
+    }
+
+    return 0;
+}
 
 /**
  * Write a received response into a response type.
@@ -207,13 +221,7 @@ bs_resolve_did(const char *handle)
 
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
-    if (res != CURLE_OK) {
-        char *err_msg = (char *)curl_easy_strerror(res);
-        response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
-        strcpy(response->err_msg, err_msg);
-        CALL_CLEANUP;
-        return response;
-    }
+    CURL_CALL_ERROR_CHECK;
 
     curl_free(escaped_handle);
     CALL_CLEANUP;
@@ -255,6 +263,49 @@ bs_profile_get(const char *handle)
     CALL_CLEANUP;
     
     return response;   
+}
+
+bs_client_response_t*
+bs_timeline_get(const bs_client_pagination_opts *opts)
+{
+    bs_client_response_t *response = bs_client_response_new();
+    struct curl_slist *chunk = NULL;
+
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, token_header);
+
+    char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
+    strcpy(url, GET_TIMELINE_URL);
+
+    if (opts != NULL) {
+        if (opts->limit != 0 && opts->limit >= 30) {
+            if (opts->limit > 100) {
+                char *err_msg = "limit max value is 100";
+                response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
+                strcpy(response->err_msg, err_msg);
+                CALL_CLEANUP;
+                return response;
+            }
+
+            strcat(url, "?limit=");
+            char lim_val[11] = {0};
+            sprintf(lim_val, "%d", opts->limit);
+            strcat(url, lim_val);
+        } else {
+            strcat(url, "?limit=100");
+        }
+    }
+
+    SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
+    CURL_CALL_ERROR_CHECK;
+
+    CALL_CLEANUP;
+    
+    return response;  
 }
 
 void

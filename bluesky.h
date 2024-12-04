@@ -48,6 +48,18 @@ typedef struct {
 } bs_client_response_t;
 
 /**
+ * Contains the errors returned for pagination validation.
+ */
+enum bs_client_pagination_errs {
+    BS_CLIENT_PAGINATION_ERR_OVER_LIMIT = 3
+};
+
+typedef struct {
+    unsigned int limit; // 1-100 - default: 50
+    char *cursor;
+} bs_client_pagination_opts;
+
+/**
  * Initialize the library.
  */
 int
@@ -59,11 +71,29 @@ bs_client_init(const char *handle, const char *app_password);
 void
 bs_client_response_free(bs_client_response_t *res);
 
+/**
+ *
+ */
 bs_client_response_t*
 bs_resolve_did(const char *handle);
 
+/**
+ *
+ */
 bs_client_response_t*
 bs_profile_get(const char *handle);
+
+/**
+ *
+ */
+bs_client_response_t*
+bs_feed_get(const bs_client_pagination_opts *opts);
+
+/**
+ * Get the authenticated user's timeline.
+ */
+bs_client_response_t*
+bs_timeline_get(const bs_client_pagination_opts *opts);
 
 /**
  * Free the memory used by the client.
