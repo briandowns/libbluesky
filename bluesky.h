@@ -54,8 +54,12 @@ enum bs_client_pagination_errs {
     BS_CLIENT_PAGINATION_ERR_OVER_LIMIT = 3
 };
 
+/**
+ * Structure used to pass pagination settings. The limit field will be ignored
+ * if the value is less than 50. The max value supported by the API is 100.
+ */
 typedef struct {
-    unsigned int limit; // 1-100 - default: 50
+    unsigned int limit;
     char *cursor;
 } bs_client_pagination_opts;
 
@@ -71,26 +75,41 @@ bs_client_init(const char *handle, const char *app_password);
 void
 bs_client_response_free(bs_client_response_t *res);
 
-/**
- *
+/** 
+ * Creates a new post to the authenticated user's feed. The response
+ * memory needs to be freed by the caller.
+ * 
+ * data argument must be JSON in the following format:
+ * 
+ * {"$type": "app.bsky.feed.post",
+ *  "text": "Hello World!",
+ *  "createdAt": "2023-08-07T05:31:12.156888Z"}
  */
 bs_client_response_t*
-bs_resolve_did(const char *handle);
+bs_client_post(const char *msg);
 
 /**
- *
+ * Retrieve the profile information for the given handle.
  */
 bs_client_response_t*
-bs_profile_get(const char *handle);
+bs_client_profile_get(const char *handle);
 
 /**
- *
+ * Retrieve the profile preferences for the authenticated user.
+ */
+bs_client_response_t*
+bs_profile_preferences();
+
+/**
+ * 
  */
 bs_client_response_t*
 bs_feed_get(const bs_client_pagination_opts *opts);
 
 /**
- * Get the authenticated user's timeline.
+ * Get the authenticated user's timeline. The JSON response has a field called
+ * "cursor". If this field is populated, there are more results to retrieve. 
+ * The response memory needs to be freed by the caller.
  */
 bs_client_response_t*
 bs_timeline_get(const bs_client_pagination_opts *opts);

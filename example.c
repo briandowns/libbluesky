@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include <jansson.h>
 
@@ -30,7 +31,18 @@ main(int argc, char **argv)
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
 
-    bs_client_response_t *res = bs_timeline_get(NULL);
+    // bs_client_response_t *res = bs_timeline_get(NULL);
+    // printf("%s\n", res->resp);
+    // bs_client_response_free(res);
+
+    // bs_client_response_t *res = bs_profile_preferences();
+    // printf("%s\n", res->resp);
+    // bs_client_response_free(res);
+
+    const char *msg = "{\"$type\": \"app.bsky.feed.post\", \
+        \"text\": \"Another post from libbluesky #c library!\", \
+        \"createdAt\": \"2024-12-03T22:47:30.0000Z\"}";
+    bs_client_response_t *res = bs_client_post(msg);
     printf("%s\n", res->resp);
     bs_client_response_free(res);
 

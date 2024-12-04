@@ -30,8 +30,10 @@ tests: clean
 	rm -f tests/tests
 
 .PHONY: valgrind
-valgrind: tests
-	valgrind --leak-check=full ./tests/tests 2>&1 | awk -F':' '/definitely lost:/ {print $2}'
+valgrind:
+	$(CC) -g -o $@ bluesky.c example.c $(CFLAGS) $(LDFLAGS)
+	valgrind --leak-check=full ./valgrind 2>&1 | awk -F':' '/definitely lost:/ {print $2}'
+	rm -f valgrind
 
 .PHONY: install
 install: 
@@ -63,4 +65,4 @@ clean:
 
 .PHONY: example
 example: clean
-	$(CC) -g -o $@ bluesky.c example.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $@ bluesky.c example.c $(CFLAGS) $(LDFLAGS)

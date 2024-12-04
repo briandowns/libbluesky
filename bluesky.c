@@ -46,6 +46,7 @@
 #define POST_FEED_URL API_BASE    "/com.atproto.repo.createRecord"
 #define GET_PROFILE_URL API_BASE  "/app.bsky.actor.getProfile"
 #define GET_TIMELINE_URL API_BASE "/app.bsky.feed.getTimeline"
+#define PROFILE_PREF_URL API_BASE "/app.bsky.actor.getPreferences"
 
 #define SET_BASIC_CURL_CONFIG \
     curl_easy_setopt(curl, CURLOPT_URL, url); \
@@ -68,7 +69,9 @@
     free(url);
 
 static CURL *curl = NULL;
+static char did[256];
 static char token[400];
+static char cur_handle[256];
 static char refresh_token[400];
 static char token_header[TOKEN_HEADER_SIZE];
 
@@ -114,6 +117,18 @@ bs_client_response_new()
     return resp;
 }
 
+void
+bs_client_response_free(bs_client_response_t *res)
+{
+    if (res != NULL) {
+        if (res->resp != NULL) free(res->resp);
+        if (res->err_msg != NULL) free(res->err_msg);
+
+        free(res);
+        res = NULL;
+    }
+}
+
 bs_client_response_t*
 bs_client_authenticate(const char *handle, const char *app_password)
 {
@@ -155,6 +170,8 @@ bs_client_authenticate(const char *handle, const char *app_password)
 int
 bs_client_init(const char *handle, const char *app_password)
 {
+    strcpy(cur_handle, handle);
+
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
     if (!curl) {
@@ -185,52 +202,71 @@ bs_client_init(const char *handle, const char *app_password)
     strcpy(token_header, "Authorization: Bearer ");
     strcat(token_header, token);
 
+    res = bs_client_profile_get(cur_handle);
+
+    const char *d = {0};
+    root = json_loads(res->resp, 0, &error);
+    json_unpack(root, "{s:s}", "did", &d);
+
+    strcpy(did, d);
+
+    bs_client_response_free(res);
+
     json_decref(root);
 
     return 0;
 }
 
-void
-bs_client_response_free(bs_client_response_t *res)
-{
-    if (res != NULL) {
-        if (res->resp != NULL) free(res->resp);
-        if (res->err_msg != NULL) free(res->err_msg);
-
-        free(res);
-        res = NULL;
-    }
-}
-
 bs_client_response_t*
-bs_resolve_did(const char *handle)
+bs_client_post(const char *msg)
 {
     bs_client_response_t *response = bs_client_response_new();
     struct curl_slist *chunk = NULL;
 
     chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, BS_RES_JSON_HEADER);
     chunk = curl_slist_append(chunk, token_header);
 
-    char *escaped_handle = curl_easy_escape(curl, handle, strlen(handle));
     char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
-    strcpy(url, GET_PROFILE_URL);
-    strcat(url, "?handle=");
-    strcat(url, handle);
+    strcpy(url, POST_FEED_URL);
+
+    json_error_t error;
+    json_t *root = json_object();
+    json_t *repo = json_string(did);
+    json_t *type = json_string("app.bsky.feed.post");
+    json_t *collection = json_string("app.bsky.feed.post");
+    json_t *record = json_loads(msg, 0, &error);
+    // check error!!!!
+    // fprintf(stderr, "Error parsing JSON: %s\n", error.text);
+    // fprintf(stderr, "Line: %d, Column: %d, Position: %d\n", 
+    //     error.line, error.column, error.position);
+    json_object_set(root, "repo", repo);
+    json_object_set(root, "type", type);
+    json_object_set(root, "collection", collection);
+    json_object_set(root, "record", record);
+    char *data = json_dumps(root, 0);
 
     SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
 
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
     CURL_CALL_ERROR_CHECK;
 
-    curl_free(escaped_handle);
+    json_decref(repo);
+    json_decref(collection);
+    json_decref(record);
+    json_decref(root);
+    free(data);
+
     CALL_CLEANUP;
     
-    return response;
+    return response;     
 }
 
 bs_client_response_t*
-bs_profile_get(const char *handle)
+bs_client_profile_get(const char *handle)
 {
     bs_client_response_t *response = bs_client_response_new();
     struct curl_slist *chunk = NULL;
@@ -266,6 +302,30 @@ bs_profile_get(const char *handle)
 }
 
 bs_client_response_t*
+bs_profile_preferences()
+{
+    bs_client_response_t *response = bs_client_response_new();
+    struct curl_slist *chunk = NULL;
+
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, token_header);
+
+    char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
+    strcpy(url, PROFILE_PREF_URL);
+
+    SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
+    CURL_CALL_ERROR_CHECK;
+
+    CALL_CLEANUP;
+    
+    return response;    
+}
+
+bs_client_response_t*
 bs_timeline_get(const bs_client_pagination_opts *opts)
 {
     bs_client_response_t *response = bs_client_response_new();
@@ -278,7 +338,7 @@ bs_timeline_get(const bs_client_pagination_opts *opts)
     strcpy(url, GET_TIMELINE_URL);
 
     if (opts != NULL) {
-        if (opts->limit != 0 && opts->limit >= 30) {
+        if (opts->limit != 0 && opts->limit >= 50) {
             if (opts->limit > 100) {
                 char *err_msg = "limit max value is 100";
                 response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
@@ -293,6 +353,11 @@ bs_timeline_get(const bs_client_pagination_opts *opts)
             strcat(url, lim_val);
         } else {
             strcat(url, "?limit=100");
+        }
+
+        if (opts->cursor != NULL) {
+            strcat(url, "&cursor=");
+            strcat(url, opts->cursor);
         }
     }
 

@@ -7,6 +7,7 @@
 bin/*
 tests/tests
 example
+valgrind
 libbluesky.dylib
 libbluesky.so
 bsky
