@@ -10,7 +10,7 @@ int
 main(int argc, char **argv)
 {
     char *bksy_app_password = getenv("BSKY_APP_PASSWORD");
-    int ret = bs_client_init("bdowns328.bsky.social", bksy_app_password);
+    int ret = bs_client_init("bdowns328.bsky.social", bksy_app_password, NULL);
     if (ret == 1) {
         fprintf(stderr, "failed to login to bluesky\n");
         return 1;
@@ -40,8 +40,8 @@ main(int argc, char **argv)
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
 
-    // const char *msg = "{\"$type\": \"app.bsky.feed.post\", \
-    //     \"text\": \"Another post from libbluesky #c library!\", \
+    // const char *msg = "{\"$type\": \"app.bsky.feed.post\",
+    //     \"text\": \"Another post from libbluesky #c library!\",
     //     \"createdAt\": \"2024-12-19T22:47:30.0000Z\"}";
     // bs_client_response_t *res = bs_client_post(msg);
     // printf("%s\n", res->resp);

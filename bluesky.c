@@ -84,7 +84,7 @@ bs_client_pagination_opts_validate(const bs_client_pagination_opts *opts)
     if (opts->limit > 100) {
         return BS_CLIENT_PAGINATION_ERR_OVER_LIMIT;
     }
-
+    
     return 0;
 }
 
@@ -94,17 +94,17 @@ bs_client_pagination_opts_validate(const bs_client_pagination_opts *opts)
 static size_t
 cb(char *data, size_t size, size_t nmemb, void *clientp)
 {
-    size_t realsize = size * nmemb;
+    size_t real_size = size * nmemb;
     bs_client_response_t *mem = (bs_client_response_t*)clientp;
 
-    char *ptr = realloc(mem->resp, mem->size + realsize+1);
+    char *ptr = realloc(mem->resp, mem->size + real_size+1);
 
     mem->resp = ptr;
-    memcpy(&(mem->resp[mem->size]), data, realsize);
-    mem->size += realsize;
+    memcpy(&(mem->resp[mem->size]), data, real_size);
+    mem->size += real_size;
     mem->resp[mem->size] = 0;
 
-    return realsize;
+    return real_size;
 }
 
 /**
@@ -168,32 +168,32 @@ bs_client_authenticate(const char *handle, const char *app_password)
 }
 
 int
-bs_client_init(const char *handle, const char *app_password)
+bs_client_init(const char *handle, const char *app_password, char *error)
 {
     strcpy(cur_handle, handle);
 
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
     if (!curl) {
-        return 1;
+        return BS_CLIENT_INIT_ERR_MEM;
     }
 
     bs_client_response_t *res = bs_client_authenticate(handle, app_password);
     if (res->err_msg != NULL) {
         printf("%s\n", res->err_msg);
         bs_client_response_free(res);
-        return 2;
+        return BS_CLIENT_INIT_ERR_AUTH;
     }
 
     json_t *root;
-    json_error_t error;
+    json_error_t j_error;
 
-    root = json_loads(res->resp, 0, &error);
+    root = json_loads(res->resp, 0, &j_error);
     if (root == NULL) {
-        size_t err_len = strlen(error.text);
+        size_t err_len = strlen(j_error.text);
         res->err_msg = calloc(err_len+1, sizeof(char));
-        strcpy(res->err_msg, error.text);
-        return res;
+        strcpy(error, j_error.text);
+        return BS_CLIENT_INIT_ERR_JSON;
     }
 
     const char *t = {0};
@@ -213,10 +213,10 @@ bs_client_init(const char *handle, const char *app_password)
     const char *d = {0};
     root = json_loads(res->resp, 0, &error);
     if (root == NULL) {
-        size_t err_len = strlen(error.text);
+        size_t err_len = strlen(j_error.text);
         res->err_msg = calloc(err_len+1, sizeof(char));
-        strcpy(res->err_msg, error.text);
-        return res;
+        strcpy(error, j_error.text);
+        return BS_CLIENT_INIT_ERR_JSON;
     }
     json_unpack(root, "{s:s}", "did", &d);
 

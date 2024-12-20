@@ -34,6 +34,10 @@ extern "C" {
 
 #include <stdlib.h>
 
+#define BS_CLIENT_INIT_ERR_MEM  1
+#define BS_CLIENT_INIT_ERR_AUTH 2
+#define BS_CLIENT_INIT_ERR_JSON 3
+
 /**
  * Default response structure returned for each call to the API. Contains the
  * API response, the response code, response size, any error code, and message
@@ -67,7 +71,7 @@ typedef struct {
  * Initialize the library.
  */
 int
-bs_client_init(const char *handle, const char *app_password);
+bs_client_init(const char *handle, const char *app_password, char *error);
 
 /**
  * Free the memory used in the client response.
