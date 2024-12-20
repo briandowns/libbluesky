@@ -4,6 +4,9 @@
 
 libbluesky is a C/C++ client library for the BlueSky API. It requires a Bluesky account to connect through and an application password to authenticate with.
 
+
+**Note**: This library is very much in alpha and will experience change over the coming months. 
+
 ## Usage
 
 To initialize the library, the user's github token is required.
@@ -32,7 +35,15 @@ make example
 * API response data is returned in a string containing JSON.
 * The caller is responsible for how to handle the data.
 
-### asdf
+### User
+
+* Retrieve a user's profile information
+* Retrieve the authenticated user's timeline
+* Retrieve the authenticated preferences
+
+### Posts
+
+* Create a post
 
 ## Requirements / Dependencies
 
