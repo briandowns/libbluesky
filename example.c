@@ -31,10 +31,10 @@ main(int argc, char **argv)
     // bs_client_response_t *res = bs_profile_get("bdowns328.bsky.social");
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
-    printf("XXX - here\n");
-    bs_client_response_t *res = bs_timeline_get(NULL);
-    printf("%s\n", res->resp);
-    bs_client_response_free(res);
+
+    // bs_client_response_t *res = bs_timeline_get(NULL);
+    // printf("%s\n", res->resp);
+    // bs_client_response_free(res);
 
     // bs_client_response_t *res = bs_profile_preferences();
     // printf("%s\n", res->resp);
@@ -46,6 +46,16 @@ main(int argc, char **argv)
     // bs_client_response_t *res = bs_client_post(msg);
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
+
+    // bs_client_response_t *res = bs_client_follows_get("bdowns328.bsky.social", NULL);
+    // printf("%s ", res->resp);
+    // printf("%d\n", res->err_code);
+    // bs_client_response_free(res);
+
+    bs_client_response_t *res = bs_client_followers_get("bdowns328.bsky.social", NULL);
+    printf("%s ", res->resp);
+    printf("%d\n", res->err_code);
+    bs_client_response_free(res);
 
     bs_client_free();
 

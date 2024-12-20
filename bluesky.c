@@ -41,12 +41,14 @@
 #define DID_MAX_SIZE      2048
 #define DEFAULT_URL_SIZE  2048
 
-#define API_BASE                  "https://bsky.social/xrpc"
-#define AUTH_URL API_BASE         "/com.atproto.server.createSession"
-#define POST_FEED_URL API_BASE    "/com.atproto.repo.createRecord"
-#define GET_PROFILE_URL API_BASE  "/app.bsky.actor.getProfile"
-#define GET_TIMELINE_URL API_BASE "/app.bsky.feed.getTimeline"
-#define PROFILE_PREF_URL API_BASE "/app.bsky.actor.getPreferences"
+#define API_BASE                   "https://bsky.social/xrpc"
+#define AUTH_URL API_BASE          "/com.atproto.server.createSession"
+#define POST_FEED_URL API_BASE     "/com.atproto.repo.createRecord"
+#define GET_PROFILE_URL API_BASE   "/app.bsky.actor.getProfile"
+#define GET_TIMELINE_URL API_BASE  "/app.bsky.feed.getTimeline"
+#define PROFILE_PREF_URL API_BASE  "/app.bsky.actor.getPreferences"
+#define GET_FOLLOWS_URL API_BASE   "/app.bsky.graph.getFollows"
+#define GET_FOLLOWERS_URL API_BASE "/app.bsky.graph.getFollowers"
 
 #define SET_BASIC_CURL_CONFIG \
     curl_easy_setopt(curl, CURLOPT_URL, url); \
@@ -314,6 +316,111 @@ bs_client_profile_get(const char *handle)
     CALL_CLEANUP;
     
     return response;   
+}
+
+bs_client_response_t*
+bs_client_follows_get(const char *handle,
+                      const bs_client_pagination_opts *opts)
+{
+    bs_client_response_t *response = bs_client_response_new();
+    struct curl_slist *chunk = NULL;
+
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, token_header);
+
+    char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
+    strcpy(url, GET_FOLLOWERS_URL);
+    strcat(url, "?actor=");
+    strcat(url, handle);
+
+    if (opts != NULL) {
+        if (opts->limit != 0 && opts->limit >= 50) {
+            if (opts->limit > 100) {
+                char *err_msg = "limit max value is 100";
+                response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
+                strcpy(response->err_msg, err_msg);
+                CALL_CLEANUP;
+                return response;
+            }
+
+            strcat(url, "?limit=");
+            char lim_val[11] = {0};
+            sprintf(lim_val, "%d", opts->limit);
+            strcat(url, lim_val);
+        } else {
+            strcat(url, "?limit=100");
+        }
+
+        if (opts->cursor != NULL) {
+            strcat(url, "&cursor=");
+            strcat(url, opts->cursor);
+        }
+    }
+
+    SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
+    CURL_CALL_ERROR_CHECK;
+
+    CALL_CLEANUP;
+    
+    return response; 
+}
+
+/**
+ * Retrieve the followers for the given handle.
+ */
+bs_client_response_t*
+bs_client_followers_get(const char *handle,
+                        const bs_client_pagination_opts *opts)
+{
+    bs_client_response_t *response = bs_client_response_new();
+    struct curl_slist *chunk = NULL;
+
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, token_header);
+
+    char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
+    strcpy(url, GET_FOLLOWS_URL);
+    strcat(url, "?actor=");
+    strcat(url, handle);
+
+    if (opts != NULL) {
+        if (opts->limit != 0 && opts->limit >= 50) {
+            if (opts->limit > 100) {
+                char *err_msg = "limit max value is 100";
+                response->err_msg = calloc(strlen(err_msg)+1, sizeof(char));
+                strcpy(response->err_msg, err_msg);
+                CALL_CLEANUP;
+                return response;
+            }
+
+            strcat(url, "?limit=");
+            char lim_val[11] = {0};
+            sprintf(lim_val, "%d", opts->limit);
+            strcat(url, lim_val);
+        } else {
+            strcat(url, "?limit=100");
+        }
+
+        if (opts->cursor != NULL) {
+            strcat(url, "&cursor=");
+            strcat(url, opts->cursor);
+        }
+    }
+
+    SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
+    CURL_CALL_ERROR_CHECK;
+
+    CALL_CLEANUP;
+    
+    return response; 
 }
 
 bs_client_response_t*

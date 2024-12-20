@@ -38,12 +38,14 @@ make example
 ### User
 
 * Retrieve a user's profile information
-* Retrieve the authenticated user's timeline
 * Retrieve the authenticated preferences
+* Retrieve follows for a given handle
+* Retrieve followers for a given handle
 
 ### Posts
 
 * Create a post
+* Retrieve the authenticated user's timeline
 
 ## Requirements / Dependencies
 

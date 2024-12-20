@@ -99,6 +99,20 @@ bs_client_response_t*
 bs_client_profile_get(const char *handle);
 
 /**
+ * Retrieve the follows for the given handle.
+ */
+bs_client_response_t*
+bs_client_follows_get(const char *handle,
+                      const bs_client_pagination_opts *opts);
+
+/**
+ * Retrieve the followers for the given handle.
+ */
+bs_client_response_t*
+bs_client_followers_get(const char *handle,
+                        const bs_client_pagination_opts *opts);
+
+/**
  * Retrieve the profile preferences for the authenticated user.
  */
 bs_client_response_t*
