@@ -9,7 +9,8 @@
 int
 main(int argc, char **argv)
 {
-    int ret = bs_client_init("bdowns328.bsky.social", "jrp5-x4lh-zotm-cmkj");
+    char *bksy_app_password = getenv("BSKY_APP_PASSWORD");
+    int ret = bs_client_init("bdowns328.bsky.social", bksy_app_password);
     if (ret == 1) {
         fprintf(stderr, "failed to login to bluesky\n");
         return 1;
@@ -30,21 +31,21 @@ main(int argc, char **argv)
     // bs_client_response_t *res = bs_profile_get("bdowns328.bsky.social");
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
-
-    // bs_client_response_t *res = bs_timeline_get(NULL);
-    // printf("%s\n", res->resp);
-    // bs_client_response_free(res);
+    printf("XXX - here\n");
+    bs_client_response_t *res = bs_timeline_get(NULL);
+    printf("%s\n", res->resp);
+    bs_client_response_free(res);
 
     // bs_client_response_t *res = bs_profile_preferences();
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
 
-    const char *msg = "{\"$type\": \"app.bsky.feed.post\", \
-        \"text\": \"Another post from libbluesky #c library!\", \
-        \"createdAt\": \"2024-12-03T22:47:30.0000Z\"}";
-    bs_client_response_t *res = bs_client_post(msg);
-    printf("%s\n", res->resp);
-    bs_client_response_free(res);
+    // const char *msg = "{\"$type\": \"app.bsky.feed.post\", \
+    //     \"text\": \"Another post from libbluesky #c library!\", \
+    //     \"createdAt\": \"2024-12-19T22:47:30.0000Z\"}";
+    // bs_client_response_t *res = bs_client_post(msg);
+    // printf("%s\n", res->resp);
+    // bs_client_response_free(res);
 
     bs_client_free();
 

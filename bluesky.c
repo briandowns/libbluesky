@@ -189,6 +189,12 @@ bs_client_init(const char *handle, const char *app_password)
     json_error_t error;
 
     root = json_loads(res->resp, 0, &error);
+    if (root == NULL) {
+        size_t err_len = strlen(error.text);
+        res->err_msg = calloc(err_len+1, sizeof(char));
+        strcpy(res->err_msg, error.text);
+        return res;
+    }
 
     const char *t = {0};
     const char *rt = {0};
@@ -206,6 +212,12 @@ bs_client_init(const char *handle, const char *app_password)
 
     const char *d = {0};
     root = json_loads(res->resp, 0, &error);
+    if (root == NULL) {
+        size_t err_len = strlen(error.text);
+        res->err_msg = calloc(err_len+1, sizeof(char));
+        strcpy(res->err_msg, error.text);
+        return res;
+    }
     json_unpack(root, "{s:s}", "did", &d);
 
     strcpy(did, d);
@@ -236,10 +248,13 @@ bs_client_post(const char *msg)
     json_t *type = json_string("app.bsky.feed.post");
     json_t *collection = json_string("app.bsky.feed.post");
     json_t *record = json_loads(msg, 0, &error);
-    // check error!!!!
-    // fprintf(stderr, "Error parsing JSON: %s\n", error.text);
-    // fprintf(stderr, "Line: %d, Column: %d, Position: %d\n", 
-    //     error.line, error.column, error.position);
+    if (root == NULL) {
+        size_t err_len = strlen(error.text);
+        response->err_msg = calloc(err_len+1, sizeof(char));
+        strcpy(response->err_msg, error.text);
+        return response;
+    }
+
     json_object_set(root, "repo", repo);
     json_object_set(root, "type", type);
     json_object_set(root, "collection", collection);
