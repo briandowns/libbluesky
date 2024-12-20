@@ -11,7 +11,7 @@ main(int argc, char **argv)
 {
     char *bksy_app_password = getenv("BSKY_APP_PASSWORD");
     int ret = bs_client_init("bdowns328.bsky.social", bksy_app_password, NULL);
-    if (ret == 1) {
+    if (ret > 0) {
         fprintf(stderr, "failed to login to bluesky\n");
         return 1;
     }

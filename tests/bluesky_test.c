@@ -43,11 +43,15 @@ tearDown(void)
 int
 main(void)
 {
-    bs_client_init("", "");
+    // int ret = bs_client_init("", "", NULL);
+    // if (ret > 0) {
+    //     fprintf(stderr, "failed to login to bluesky\n");
+    //     return 1;
+    // }
 
     UNITY_BEGIN();
 
-    bs_client_free();
+    // bs_client_free();
 
     return UNITY_END();
 }
