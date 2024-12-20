@@ -213,7 +213,7 @@ bs_client_init(const char *handle, const char *app_password, char *error)
     res = bs_client_profile_get(cur_handle);
 
     const char *d = {0};
-    root = json_loads(res->resp, 0, &error);
+    root = json_loads(res->resp, 0, &j_error);
     if (root == NULL) {
         size_t err_len = strlen(j_error.text);
         res->err_msg = calloc(err_len+1, sizeof(char));
