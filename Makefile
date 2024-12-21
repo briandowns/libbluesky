@@ -4,11 +4,19 @@ NAME = libbluesky
 
 UNAME_S = $(shell uname -s)
 
+LDFLAGS = -lcurl
 CFLAGS  = -std=c17 -O3 -fPIC -Wall -Wextra
 ifeq ($(UNAME_S),FreeBSD)
-	CFLAGS += $(shell pkg-config --cflags --libs libcurl)
+	LDFLAGS += $(shell pkg-config libcurl --libs)
+	CFLAGS  += $(shell pkg-config libcurl --cflags)
+else ifeq ($(UNAME_S),Darwin)
+	LDFLAGS += $(shell pkg-config jansson --libs)
+	CFLAGS += $(shell pkg-config jansson --cflags)
+else
+	LDFLAGS += -ljansson
 endif
-LDFLAGS = -lcurl -ljansson
+
+
 
 # respect traditional UNIX paths
 INCDIR  = /usr/local/include
