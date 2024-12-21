@@ -16,8 +16,6 @@ else
 	LDFLAGS += -ljansson
 endif
 
-
-
 # respect traditional UNIX paths
 INCDIR  = /usr/local/include
 LIBDIR  = /usr/local/lib
