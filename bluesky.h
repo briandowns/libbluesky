@@ -127,6 +127,12 @@ bs_client_response_t*
 bs_timeline_get(const bs_client_pagination_opts *opts);
 
 /**
+ * Retrieve posts from the given user DID.
+ */
+bs_client_response_t*
+bs_author_feed_get(const char *did, const bs_client_pagination_opts *opts);
+
+/**
  * Free the memory used by the client.
  */
 void

@@ -16,7 +16,8 @@ main(int argc, char **argv)
         return 1;
     }
 
-    // bs_client_response_t *res = bs_resolve_did("bdowns328.bsky.social");
+    // bs_client_response_t *res = bs_client_profile_get("bdowns328.bsky.social");
+    // printf("%s\n", res->resp);
 
     // json_t *root;
     // json_error_t error;
@@ -27,9 +28,6 @@ main(int argc, char **argv)
     // json_unpack(root, "{s:s}", "did", &did);
     // printf("%s\n", did);
     // json_decref(root);
-
-    // bs_client_response_t *res = bs_profile_get("bdowns328.bsky.social");
-    // printf("%s\n", res->resp);
     // bs_client_response_free(res);
 
     // bs_client_response_t *res = bs_timeline_get(NULL);
@@ -47,14 +45,20 @@ main(int argc, char **argv)
     // printf("%s\n", res->resp);
     // bs_client_response_free(res);
 
-    // bs_client_response_t *res = bs_client_follows_get("bdowns328.bsky.social", NULL);
+    // bs_client_response_t *res = bs_client_follows_get(
+    //                             "bdowns328.bsky.social", NULL);
     // printf("%s ", res->resp);
     // printf("%d\n", res->err_code);
     // bs_client_response_free(res);
 
-    bs_client_response_t *res = bs_client_followers_get("bdowns328.bsky.social", NULL);
-    printf("%s ", res->resp);
-    printf("%d\n", res->err_code);
+    // bs_client_response_t *res = bs_client_followers_get(
+    //                             "bdowns328.bsky.social", NULL);
+    // printf("%s ", res->resp);
+    // bs_client_response_free(res);
+
+    bs_client_response_t *res = bs_author_feed_get(
+                                "did:plc:d2pmhxz4ud7z3zwc5rejgl53", NULL);
+    printf("%s\n", res->resp);
     bs_client_response_free(res);
 
     bs_client_free();

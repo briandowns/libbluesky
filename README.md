@@ -46,6 +46,7 @@ make example
 
 * Create a post
 * Retrieve the authenticated user's timeline
+* Retrieve post for a given account
 
 ## Requirements / Dependencies
 
