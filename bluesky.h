@@ -143,8 +143,15 @@ bs_client_author_feed_get(const char *did,
  * Retrieve likes from the given user handle.
  */
 bs_client_response_t*
-bs_client_actor_likes_get(const char *handle,
-                          const bs_client_pagination_opts *opts);
+bs_client_handle_likes_get(const char *handle,
+                           const bs_client_pagination_opts *opts);
+
+/**
+ * Retrieve likes for the given user at-uri. The at-uri needs to be in the
+ * followig format: at://<did>
+ */
+bs_client_response_t*
+bs_client_likes_get(const char *handle, const bs_client_pagination_opts *opts);
 
 /**
  * Free the memory used by the client.

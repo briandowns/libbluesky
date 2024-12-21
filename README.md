@@ -49,6 +49,11 @@ make example
 * Retrieve the authenticated user's timeline
 * Retrieve post for a given account
 
+### Likes
+
+* Retrieve likes for the authenticated user
+* Retrieve likes for a given at-uri
+
 ## Requirements / Dependencies
 
 * curl
