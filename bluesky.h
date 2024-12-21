@@ -99,6 +99,12 @@ bs_client_response_t*
 bs_client_profile_get(const char *handle);
 
 /**
+ * Retrieve the DID for the given handle.
+ */
+bs_client_response_t*
+bs_client_resolve_handle(const char *handle);
+
+/**
  * Retrieve the follows for the given handle.
  */
 bs_client_response_t*

@@ -41,15 +41,16 @@
 #define DID_MAX_SIZE      2048
 #define DEFAULT_URL_SIZE  2048
 
-#define API_BASE                   "https://bsky.social/xrpc"
-#define AUTH_URL API_BASE          "/com.atproto.server.createSession"
-#define POST_FEED_URL API_BASE     "/com.atproto.repo.createRecord"
-#define GET_PROFILE_URL API_BASE   "/app.bsky.actor.getProfile"
-#define GET_TIMELINE_URL API_BASE  "/app.bsky.feed.getTimeline"
-#define PROFILE_PREF_URL API_BASE  "/app.bsky.actor.getPreferences"
-#define GET_FOLLOWS_URL API_BASE   "/app.bsky.graph.getFollows"
-#define GET_FOLLOWERS_URL API_BASE "/app.bsky.graph.getFollowers"
-#define GET_AUTHOR_FEED API_BASE   "/app.bsky.feed.getAuthorFeed"
+#define API_BASE                    "https://bsky.social/xrpc"
+#define AUTH_URL API_BASE           "/com.atproto.server.createSession"
+#define RESOLVE_HANDLE_URL API_BASE "/com.atproto.identity.resolveHandle"
+#define POST_FEED_URL API_BASE      "/com.atproto.repo.createRecord"
+#define GET_PROFILE_URL API_BASE    "/app.bsky.actor.getProfile"
+#define GET_TIMELINE_URL API_BASE   "/app.bsky.feed.getTimeline"
+#define PROFILE_PREF_URL API_BASE   "/app.bsky.actor.getPreferences"
+#define GET_FOLLOWS_URL API_BASE    "/app.bsky.graph.getFollows"
+#define GET_FOLLOWERS_URL API_BASE  "/app.bsky.graph.getFollowers"
+#define GET_AUTHOR_FEED API_BASE    "/app.bsky.feed.getAuthorFeed"
 
 #define SET_BASIC_CURL_CONFIG \
     curl_easy_setopt(curl, CURLOPT_URL, url); \
@@ -170,6 +171,32 @@ bs_client_authenticate(const char *handle, const char *app_password)
     return response;
 }
 
+bs_client_response_t*
+bs_client_resolve_handle(const char *handle)
+{
+    bs_client_response_t *response = bs_client_response_new();
+    struct curl_slist *chunk = NULL;
+
+    chunk = curl_slist_append(chunk, BS_REQ_JSON_HEADER);
+    chunk = curl_slist_append(chunk, token_header);
+
+    char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
+    strcpy(url, RESOLVE_HANDLE_URL);
+    strcat(url, "?handle=");
+    strcat(url, handle);
+
+    SET_BASIC_CURL_CONFIG;
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
+
+    CURLcode res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->resp_code);
+    CURL_CALL_ERROR_CHECK;
+
+    CALL_CLEANUP;
+    
+    return response;  
+}
+
 int
 bs_client_init(const char *handle, const char *app_password, char *error)
 {
@@ -211,7 +238,7 @@ bs_client_init(const char *handle, const char *app_password, char *error)
     strcpy(token_header, "Authorization: Bearer ");
     strcat(token_header, token);
 
-    res = bs_client_profile_get(cur_handle);
+    res = bs_client_resolve_handle(cur_handle);
 
     const char *d = {0};
     root = json_loads(res->resp, 0, &j_error);

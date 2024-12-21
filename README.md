@@ -41,6 +41,7 @@ make example
 * Retrieve the authenticated preferences
 * Retrieve follows for a given handle
 * Retrieve followers for a given handle
+* Resolve handle into DID (domain identifier)
 
 ### Posts
 
