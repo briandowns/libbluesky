@@ -357,7 +357,7 @@ bs_client_follows_get(const char *handle,
     chunk = curl_slist_append(chunk, token_header);
 
     char *url = calloc(DEFAULT_URL_SIZE, sizeof(char));
-    strcpy(url, GET_FOLLOWERS_URL);
+    strcpy(url, GET_FOLLOWS_URL);
     strcat(url, "?actor=");
     strcat(url, handle);
 
