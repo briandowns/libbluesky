@@ -122,7 +122,7 @@ bs_client_followers_get(const char *handle,
  * Retrieve the profile preferences for the authenticated user.
  */
 bs_client_response_t*
-bs_profile_preferences();
+bs_client_profile_preferences();
 
 /**
  * Get the authenticated user's timeline. The JSON response has a field called
@@ -130,13 +130,21 @@ bs_profile_preferences();
  * The response memory needs to be freed by the caller.
  */
 bs_client_response_t*
-bs_timeline_get(const bs_client_pagination_opts *opts);
+bs_client_timeline_get(const bs_client_pagination_opts *opts);
 
 /**
  * Retrieve posts from the given user DID.
  */
 bs_client_response_t*
-bs_author_feed_get(const char *did, const bs_client_pagination_opts *opts);
+bs_client_author_feed_get(const char *did,
+                          const bs_client_pagination_opts *opts);
+
+/**
+ * Retrieve likes from the given user handle.
+ */
+bs_client_response_t*
+bs_client_actor_likes_get(const char *handle,
+                          const bs_client_pagination_opts *opts);
 
 /**
  * Free the memory used by the client.
