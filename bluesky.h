@@ -148,7 +148,7 @@ bs_client_handle_likes_get(const char *handle,
 
 /**
  * Retrieve likes for the given user at-uri. The at-uri needs to be in the
- * followig format: at://<did>
+ * following format: at://<did>
  */
 bs_client_response_t*
 bs_client_likes_get(const char *handle, const bs_client_pagination_opts *opts);
