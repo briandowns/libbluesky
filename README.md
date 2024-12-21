@@ -12,7 +12,12 @@ libbluesky is a C/C++ client library for the BlueSky API. It requires a Bluesky 
 To initialize the library, the user's github token is required.
 
 ```c
-bs_client_init(handle, app_password);
+char *bksy_app_password = getenv("BSKY_APP_PASSWORD");
+int ret = bs_client_init("bdowns328.bsky.social", bksy_app_password, NULL);
+if (ret > 0) {
+    fprintf(stderr, "failed to login to bluesky\n");
+    return 1;
+}
 ```
 
 ## Build shared object
